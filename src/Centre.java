@@ -47,7 +47,7 @@ public class Centre {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		SEED = 1;
-		NUMBER_RUNS = 1;
+		NUMBER_RUNS = 10;
 		POPULATION_SIZE = 101; // per island, i.e. POPULATION_SIZE * NUMBER_ISLANDS ALSO, needs to be odd for
 								// elite (I was lazy)
 		NUMBER_ISLANDS = 7;
@@ -82,170 +82,156 @@ public class Centre {
 		 * if(i != 0) fileName = fileName + "_";
 		 * fileName = fileName + args[i];
 		 * }
-		 * 
-		 * 
-		 * new File(fileName).mkdir();
-		 * fileName = fileName + "/";
-		 * 
-		 * stats = new double[NUMBER_RUNS][];
-		 * //tried GAMB, MOTOR, WM
-		 * //theData = Reader.readData("../../../../WCCI2015/Walking/DATA/",
-		 * "CH-FR-LACC-RAW-RM-5hz-1000-15000.csv");
-		 * //theData = Reader.readData("../roiData/", "MOTOR_100307_3_L33.csv");
-		 * theData = Reader.readData("../roiDATA/", "MOTOR_100307_2_L21_Z.csv");
-		 * //CHANGE THE PREDICTOR SIZE IF USING THIS!!!
-		 * Language.setVarSymbolsNumbers(theData[0].length - 1);
-		 * //Language.setVarSymbols(Reader.readVarNames("./", "variableNames2.csv"));
+		 *
+
+			new File(fileName).mkdir();
+			fileName = fileName + "/";
 		 */
+		 stats = new double[NUMBER_RUNS][];
+		 //tried GAMB, MOTOR, WM
+		 //theData = Reader.readData("../../../../WCCI2015/Walking/DATA/", "CH-FR-LACC-RAW-RM-5hz-1000-15000.csv");
+		 //theData = Reader.readData("../roiData/", "MOTOR_100307_3_L33.csv");
+		 // theData = Reader.readData("../roiDATA/", "MOTOR_100307_2_L21_Z.csv");
+		 //CHANGE THE PREDICTOR SIZE IF USING THIS!!!
+
+		String fileName = "./data/d2.csv";
+		theData = Reader.readData("./data/", "d2.csv");
+
+		// Sets the number of variables
+		Language.setVarSymbolsNumbers(theData[0].length - 1);
+
 
 		// TEST AREA
-		// RNG = new Random(SEED);
-		// Trainers myTrainer = new Trainers(10);
-		// myTrainer.initialize(theData, RNG);
+		RNG = new Random(SEED);
 
-		// String currentPath = new File("").getCanonicalPath();
-		// System.out.println("Current dir:" + currentPath);
+		ThreadKiller tKiller = new ThreadKiller();
+		for (int i = 0; i < NUMBER_RUNS; i++) {
+			System.out.println("Run number " + i);
+			SEED = (int) System.currentTimeMillis();
+		 	RNG = new Random(SEED);
+			 // int noLearnCount = 0;
+			// double lastBestFitness = Double.MAX_VALUE;
+		 	generatePopulations();
 
-		// String fileName = "../data/d1.csv";
-		// File data = new File(fileName);
-		// Scanner dataReader = new Scanner(data);
-		theData = Reader.readData("./data/", "d1.csv");
-		System.out.println("");
-		// int i = 0;
-		// while (dataReader.hasNextLine()) {
-		// String[] theLine = dataReader.nextLine().split(",");
-		// theData[i][0] = Double.parseDouble(theLine[0]);
-		// theData[i][1] = Double.parseDouble(theLine[1]);
-		// System.out.println(theData[i]);
-		// i++;
-		// }
+			Chromosome bestOverAllMigrations = new Chromosome(NUMBER_GENES, RNG);
+			bestOverAllMigrations.fitnessValue = Double.MAX_VALUE;
 
-		// dataReader.close();
+			trainers = new Chromosome[NUMBER_TRAINERS];
+			predictors = new double[NUMBER_PREDICTORS][][];
+			newPredictors = new double[NUMBER_PREDICTORS][][];
+			combinePops();
 
-		/*
-		 * // TEST AREA
-		 * 
-		 * ThreadKiller tKiller = new ThreadKiller();
-		 * for (int i = 0; i < NUMBER_RUNS; i++) {
-		 * System.out.println(i);
-		 * // SEED = i;
-		 * // SEED = 1;
-		 * SEED = (int) System.currentTimeMillis();
-		 * RNG = new Random(SEED);
-		 * // int noLearnCount = 0;
-		 * // double lastBestFitness = Double.MAX_VALUE;
-		 * generatePopulations();
-		 * 
-		 * Chromosome bestOverAllMigrations = new Chromosome(NUMBER_GENES, RNG);
-		 * bestOverAllMigrations.fitnessValue = Double.MAX_VALUE;
-		 * 
-		 * trainers = new Chromosome[NUMBER_TRAINERS];
-		 * predictors = new double[NUMBER_PREDICTORS][][];
-		 * newPredictors = new double[NUMBER_PREDICTORS][][];
-		 * combinePops();
-		 * TrainerWorker.initialize(trainers, wholePop, RNG);
-		 * PredictorWorker.initialize(predictors, (int) (theData.length *
-		 * PREDICTOR_SIZE), theData, RNG);
-		 * PredictorWorker.initialize(newPredictors, (int) (theData.length *
-		 * PREDICTOR_SIZE), theData, RNG);
-		 * 
-		 * // loads the save state if the segment isn't zero
-		 * if (SEGMENT > 0) {
-		 * StateSaveRestore.restoreStateSer("./", SEGMENT - 1, bestOverAllMigrations,
-		 * curPop, trainers,
-		 * predictors);
-		 * }
-		 * 
-		 * for (int j = 0; j < NUMBER_MIGRATIONS; j++) {
-		 * tKiller.setDie(false); // REVIVEEE
-		 * Thread pool = new Thread(new PredictorPool(NUMBER_PREDICTORS, CROSSOVER_RATE,
-		 * MUTATION_RATE,
-		 * MUTATION_NUMBER, RNG, predictors, newPredictors, trainers, theData,
-		 * tKiller));
-		 * pool.start();
-		 * for (int k = 0; k < islands.length; k++) {
-		 * islands[k] = new Thread(new Island(POPULATION_SIZE, GENERATIONS,
-		 * NUMBER_MIGRATIONS, CROSSOVER_RATE,
-		 * MUTATION_RATE, MUTATION_NUMBER, RING_DISTANCE_RATE, RNG, curPop[k],
-		 * newPop[k], theData));
-		 * islands[k].start();
-		 * }
-		 * for (int k = 0; k < islands.length; k++) {
-		 * islands[k].join();
-		 * }
-		 * tKiller.setDie(true); // KILLER
-		 * pool.join(); /////////////////////////////////////
-		 * combinePops();
-		 * 
-		 * Evaluator.calcAllFitnessMSE(wholePop, theData);
-		 * Chromosome curBestResult = Evaluator.findBestChromosomeMin(wholePop);
-		 * if (curBestResult.fitnessValue < bestOverAllMigrations.fitnessValue) {
-		 * bestOverAllMigrations = curBestResult;
-		 * }
-		 * // System.out.println(bestOverAllMigrations.fitnessValue);
-		 * /*
-		 * for(int w = 0 ; w < wholePop.length ; w++)
-		 * {
-		 * System.out.print(wholePop[w].fitnessValue + ",");
-		 * }
-		 * System.out.println();
-		 * System.out.println();
-		 */
+			TrainerWorker.initialize(trainers, wholePop, RNG);
+			PredictorWorker.initialize(predictors, (int) (theData.length * PREDICTOR_SIZE), theData, RNG);
+			PredictorWorker.initialize(newPredictors, (int) (theData.length * PREDICTOR_SIZE), theData, RNG);
 
-		/*
-		 * DELETE THIS TOO!!!!
-		 * TrainerWorker.newTrainers(trainers, wholePop, predictors);
-		 * ////////////////////////////////
-		 * shuffle(wholePop);
-		 * separatePops();
-		 * 
-		 * // System.out.println("\t\t\t\t " +
-		 * // PredictorWorker.evaluatePredictorFitness(PredictorWorker.bestPredictor,
-		 * // theData, trainers));
-		 * // for(int k = 0 ; k < PredictorWorker.bestPredictor.length ; k++)
-		 * // {
-		 * // System.out.print("\t\t" + PredictorWorker.bestPredictor[k][0]);
-		 * // testingPredictors[(int)((PredictorWorker.bestPredictor[k][0] + 3) *
-		 * 20)]++;
-		 * // }
-		 * // System.out.println();
-		 * 
-		 * }
-		 * 
-		 * //
-		 * StateSaveRestore.saveStateSer("./", SEGMENT, bestOverAllMigrations, curPop,
-		 * trainers, predictors);
-		 * // StateSaveRestore.saveStateStr("./", SEGMENT, bestOverAllMigrations,
-		 * curPop,
-		 * // trainers, predictors);
-		 * StateSaveRestore.deleteStateSer("./", SEGMENT - 1);
-		 * //
-		 * 
-		 * combinePops();
-		 * Evaluator.calcAllFitnessMSE(wholePop, theData);
-		 * Chromosome curBestResult = Evaluator.findBestChromosomeMin(wholePop);
-		 * if (curBestResult.fitnessValue < bestOverAllMigrations.fitnessValue) {
-		 * bestOverAllMigrations = curBestResult;
-		 * }
-		 * // stats[i] = new double[3];
-		 * // stats[i][0] = bestResult.fitnessValue;
-		 * // stats[i][1] = Evaluator.calcAvgFitness(wholePop);
-		 * // stats[i][2] = Evaluator.calcStandardDeviation(wholePop);
-		 * Printer.printLine(fileName + i, bestOverAllMigrations);
-		 * Printer.printMulti(fileName + i, bestOverAllMigrations);
-		 * Printer.printCurStat(fileName + i, bestOverAllMigrations); // quick fix... I
-		 * wish I did this a lot earlier
-		 * // (screw you automatic windows updates)
-		 * System.out.println("\t\t" + bestOverAllMigrations.fitnessValue);
-		 * 
-		 * // for(int k = 0 ; k < testingPredictors.length ; k++)
-		 * // {
-		 * // System.out.println((((double)k/20)-3) + "\t" + testingPredictors[k]);
-		 * // }
-		 * 
-		 * }
-		 * // Printer.printStats(fileName, stats);
-		 */
+			// loads the save state if the segment isn't zero
+			if (SEGMENT > 0) {
+				StateSaveRestore.restoreStateSer(
+						"./",
+						SEGMENT - 1,
+						bestOverAllMigrations,
+						curPop, trainers, predictors
+				);
+			}
+
+			for (int j = 0; j < NUMBER_MIGRATIONS; j++) {
+				tKiller.setDie(false); // REVIVEEE
+				Thread pool = new Thread(new PredictorPool(
+						NUMBER_PREDICTORS,
+						CROSSOVER_RATE,
+						MUTATION_RATE,
+						MUTATION_NUMBER,
+						RNG,
+						predictors,
+						newPredictors,
+						trainers,
+						theData,
+						tKiller
+				));
+
+				pool.start();
+
+				for (int k = 0; k < islands.length; k++) {
+					islands[k] = new Thread(new Island(
+							POPULATION_SIZE,
+							GENERATIONS,
+							NUMBER_MIGRATIONS,
+							CROSSOVER_RATE,
+							MUTATION_RATE,
+							MUTATION_NUMBER,
+							RING_DISTANCE_RATE,
+							RNG,
+							curPop[k],
+							newPop[k],
+							theData
+					));
+					islands[k].start();
+				}
+
+				for (int k = 0; k < islands.length; k++) {
+					islands[k].join();
+				}
+
+				tKiller.setDie(true); // KILLER
+				pool.join(); /////////////////////////////////////
+				combinePops();
+
+				Evaluator.calcAllFitnessMSE(wholePop, theData);
+				Chromosome curBestResult = Evaluator.findBestChromosomeMin(wholePop);
+
+				if (curBestResult.fitnessValue < bestOverAllMigrations.fitnessValue) {
+					bestOverAllMigrations = curBestResult;
+				}
+				// System.out.println(bestOverAllMigrations.fitnessValue);
+				/*
+				 * for(int w = 0 ; w < wholePop.length ; w++)
+				 * {
+				 * System.out.print(wholePop[w].fitnessValue + ",");
+				 * }
+				 * System.out.println();
+				 * System.out.println();
+				 */
+
+				// DELETE THIS TOO!!!!
+				TrainerWorker.newTrainers(trainers, wholePop, predictors);
+				////////////////////////////////
+				shuffle(wholePop);
+				separatePops();
+
+				// System.out.println("\t\t\t\t " +
+				// PredictorWorker.evaluatePredictorFitness(PredictorWorker.bestPredictor,
+				// theData, trainers));
+				// for(int k = 0 ; k < PredictorWorker.bestPredictor.length ; k++)
+				// {
+				// System.out.print("\t\t" + PredictorWorker.bestPredictor[k][0]);
+				// testingPredictors[(int)((PredictorWorker.bestPredictor[k][0] + 3) * 20)]++;
+				// }
+				// System.out.println();
+			}
+
+			StateSaveRestore.saveStateSer("./", SEGMENT, bestOverAllMigrations, curPop, trainers, predictors);
+			// StateSaveRestore.saveStateStr("./", SEGMENT, bestOverAllMigrations,curPop, trainers, predictors);
+			StateSaveRestore.deleteStateSer("./", SEGMENT - 1);
+
+
+			// stats[i] = new double[3];
+			// stats[i][0] = bestResult.fitnessValue;
+			// stats[i][1] = Evaluator.calcAvgFitness(wholePop);
+			// stats[i][2] = Evaluator.calcStandardDeviation(wholePop);
+
+			Printer.printLine(fileName + i, bestOverAllMigrations);
+			Printer.printMulti(fileName + i, bestOverAllMigrations);
+			Printer.printCurStat(fileName + i, bestOverAllMigrations); // quick fix... I wish I did this a lot earlier (screw you automatic windows updates)
+			System.out.println("\t\t" + bestOverAllMigrations.fitnessValue);
+
+			// for(int k = 0 ; k < testingPredictors.length ; k++)
+			// {
+			// System.out.println((((double)k/20)-3) + "\t" + testingPredictors[k]);
+			// }
+		}
+
+		// Printer.printStats(fileName, stats);
 
 	}
 
