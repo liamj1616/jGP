@@ -5,6 +5,8 @@ public class Centre {
 
 	static int SEED;
 
+	static double STRIKE_PRICE;
+
 	static int NUMBER_RUNS;
 	static int POPULATION_SIZE;
 	static int NUMBER_ISLANDS;
@@ -33,6 +35,7 @@ public class Centre {
 	static double[][][] predictors;
 	static double[][][] newPredictors;
 
+	static double[][] intermediaryData;
 	static double[][] theData;
 
 	static double[][] stats;
@@ -46,8 +49,10 @@ public class Centre {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+		STRIKE_PRICE = 40;
+
 		SEED = 1;
-		NUMBER_RUNS = 10;
+		NUMBER_RUNS = 1;
 		POPULATION_SIZE = 101; // per island, i.e. POPULATION_SIZE * NUMBER_ISLANDS ALSO, needs to be odd for
 								// elite (I was lazy)
 		NUMBER_ISLANDS = 7;
@@ -94,8 +99,29 @@ public class Centre {
 		 // theData = Reader.readData("../roiDATA/", "MOTOR_100307_2_L21_Z.csv");
 		 //CHANGE THE PREDICTOR SIZE IF USING THIS!!!
 
-		String fileName = "./data/d2.csv";
-		theData = Reader.readData("./data/", "d2.csv");
+		String fileName = "./data/generatedData17.csv";
+		intermediaryData = Reader.readData("./data/", "generatedData17.csv");
+
+		theData = new double[intermediaryData.length][intermediaryData[0].length];
+		boolean flag = false;
+		int theDataLength = 0;
+		for (int i = 0; i < intermediaryData.length; i++){
+			flag = false;
+			for (int j = 1; j < intermediaryData[i].length; j++){
+				if (intermediaryData[i][j] < STRIKE_PRICE){
+					flag = true;
+					break;
+				}
+			}
+			if (flag == true){
+				theData[theDataLength] = intermediaryData[i];
+				theDataLength++;
+			}
+		}
+
+		System.out.println(theData.length);
+		System.out.println(theData[0].length);
+
 
 		// Sets the number of variables
 		Language.setVarSymbolsNumbers(theData[0].length - 1);
